@@ -34,7 +34,7 @@ namespace ArchiveExtractor
             InitializeComponent();
             
             if (Folder.GetInstance() != null)
-                Folder.GetInstance().Path = "D:\\TV Shows\\Doctor Who";
+                //Folder.GetInstance().Path = "D:\\TV Shows\\Doctor Who";
             this.folderRibbonTextBox.Text = Folder.GetInstance().Path;
             this.folderRibbonTextBox.UpdateLayout();
 
