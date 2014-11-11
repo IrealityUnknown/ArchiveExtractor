@@ -52,11 +52,8 @@
     <ApplicationIcon>favicon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MpcHcRemoteControl">
-      <HintPath>..\..\..\Libraries\MpcHcRemoteControl.dll</HintPath>
-    </Reference>
     <Reference Include="SharpCompress">
-      <HintPath>..\..\SharpCompress0.10.3\Full\SharpCompress.dll</HintPath>
+      <HintPath>refs\SharpCompress.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
