@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Configuration;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -10,10 +11,11 @@ namespace ArchiveExtractor.Tools
     public static class Format
     {
         private static bool test = true;
+        private static string[] substrings;
         private static string filename;
         private static string[] separators = { ".", " ", "-", "_" };
         private static string regexYearInSeriesName = "\\d{4}.(?i)s\\d{2}(?i)e\\d{2}|\\d{4}.\\d{1,}(?i)x\\d{2}|\\d{4}.\\d{3,}[^p]";
-        private static string regexNoYearInSeriesName = "(?i)s\\d{2}(?i)e\\d{2}|\\d{1,}(?i)x\\d{2}|\\d{3,}[^p]";
+        private static string regexNoYearInSeriesName = "(?i)s\\d{2}(?i)e\\d{2}|\\d{1,}(?i)x\\d{2}|[^x]\\d{3,4}[^p]";
 
         public static void formatFilename(File file, string regexString, int index)
         {
@@ -32,7 +34,7 @@ namespace ArchiveExtractor.Tools
                     substrings = regDelYear.Split(file.Name);
                     filename = substrings[0] + substrings[1];
                     //filename = file.Name.Substring(file.Name.IndexOf(substrings[0]), 5) + file.Name.Remove(file.Name.IndexOf(substrings[0]), substrings[0].Length + 4);
-                    System.Windows.MessageBox.Show(substrings[0] + " - " + substrings[1]);
+                    //System.Windows.MessageBox.Show(substrings[0] + " - " + substrings[1]);
                 }
             }
             // Get the extension of the file
@@ -191,9 +193,9 @@ namespace ArchiveExtractor.Tools
 
         public static void FormatAll(File file)
         {
-            filename = file.Name;
+            //filename = file.Name;
 
-            GetFileName(file);
+            GetFileExtension(file);
             GetSeriesName(file);
             GetSeason(file);
             GetEpisode(file);
@@ -201,44 +203,103 @@ namespace ArchiveExtractor.Tools
             GetReleaseName(file);
         }
 
-        public static void GetFileName(File file)
+        public static void GetFileExtension(File file)
         {
+            file.Extension = file.Name.Substring(file.Name.LastIndexOf('.'));
+            //System.Windows.MessageBox.Show("L'extension est : " + file.Extension);
+        }
+
+        public static void GetSeriesName(File file)
+        {
+            string serieName = "";
             int hasYearInSeriesName = 0;
-            string[] substrings;
-            Regex regexWithYear, regexWithoutYear;
+            Regex regexWithYear, regexWithoutYear, regexSimple;
             regexWithYear = new Regex(regexYearInSeriesName, RegexOptions.CultureInvariant | RegexOptions.Compiled);
             regexWithoutYear = new Regex(regexNoYearInSeriesName, RegexOptions.CultureInvariant | RegexOptions.Compiled);
-            Match match = regexWithYear.Match(file.Name), match2 = regexWithoutYear.Match(file.Name);
-            
-            // Checks if the Serie is a "reboot", therefore contains the year of the reboot
-            if (match.Success)          { hasYearInSeriesName = 1; }
-            else if (match2.Success)    { hasYearInSeriesName = 2; }
-            else                        { System.Windows.MessageBox.Show("Problème !");
-                                          hasYearInSeriesName = 0; 
-                                        }
+            Match match = regexWithYear.Match(file.Name), match2 = regexWithoutYear.Match(file.Name), m;
 
+            // Checks if the Serie is a "reboot", therefore contains the year of the reboot
+            if (match.Success) { hasYearInSeriesName = 1; }
+            else if (match2.Success) { hasYearInSeriesName = 2; }
+            else
+            {
+                System.Windows.MessageBox.Show("Problème !");
+                hasYearInSeriesName = 0;
+            }
+
+            // If the serie is a reboot, we suppress the year in its name.
             if (hasYearInSeriesName == 1)
             {
+                file.IsReboot = true;
                 Regex regDelYear = new Regex("\\d{4}[^p]", RegexOptions.CultureInvariant | RegexOptions.Compiled);
-                Match m = regDelYear.Match(file.Name);
+                m = regDelYear.Match(file.Name);
                 if (m.Success)
                 {
                     substrings = regDelYear.Split(file.Name);
                     filename = substrings[0] + substrings[1];
                     //filename = file.Name.Substring(file.Name.IndexOf(substrings[0]), 5) + file.Name.Remove(file.Name.IndexOf(substrings[0]), substrings[0].Length + 4);
-                    System.Windows.MessageBox.Show(substrings[0] + " - " + substrings[1]);
+                    //System.Windows.MessageBox.Show(substrings[0] + " - " + substrings[1]);
+                    serieName = substrings[0];
                 }
 
             }
+            // Else we only separate the serie's name from the rest of the filename.
+            else if (hasYearInSeriesName == 2)
+            {
+                Regex regex = new Regex(regexNoYearInSeriesName, RegexOptions.CultureInvariant | RegexOptions.Compiled);
+                substrings = regex.Split(file.Name);
+                if (substrings.Length > 1)
+                {
+                    //file.Serie = substrings[0];
+                    serieName = substrings[0];
+                }
+            }
 
+            // As long as the last character isn't alphanumeric, we suppress it.
+            regexSimple = new Regex("\\w$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+            m = regexSimple.Match(serieName);
+            while (!m.Success)
+            {
+                serieName = serieName.Remove(serieName.Length - 1);
+                m = regexSimple.Match(serieName);
+            }
+
+            file.Serie = serieName;
+            //System.Windows.MessageBox.Show("Nom de la série : " + serieName);
         }
 
-        public static void GetSeriesName(File file)
+        public static void GetSeason(File file)
         {
+            string serieAndEp = "";
+            Regex simpleRegex;
+            simpleRegex = new Regex(regexNoYearInSeriesName, RegexOptions.CultureInvariant | RegexOptions.Compiled);
+            substrings = simpleRegex.Split(file.Name);
+            if (substrings.Length > 1)
+            {
+                serieAndEp = file.Name.Substring(file.Serie.Length);
+                if (file.IsReboot)
+                {
+                    serieAndEp = serieAndEp.Substring(6);
+                    serieAndEp = serieAndEp.Remove(serieAndEp.Length - substrings[2].Length);    
+                }
+                else
+                {
+                    serieAndEp = serieAndEp.Remove(serieAndEp.Length - substrings[1].Length);
+                }
+                
+                System.Windows.MessageBox.Show("Substring 0 : " + substrings[0] + "\n\r Substring 1 : " + substrings[1] + "\n\r serieAndEp : " + serieAndEp);
 
+                //file.Serie = substrings[0];
+
+                //Get Season and Episode before removing separator in Serie
+                //serieAndEp = file.Name.Remove(file.Name.IndexOf(file.Serie), file.Serie.Length);
+
+                //if (index == 1) System.Windows.MessageBox.Show("Serie & Ep : " + serieAndEp + " - regexString : " + regexString);
+                //serieAndEp = serieAndEp.Remove(serieAndEp.IndexOf(substrings[1]));
+            }
+
+            //System.Windows.MessageBox.Show("Saison et Episode : " + serieAndEp);
         }
-
-        public static void GetSeason(File file) { }
 
         public static void GetEpisode(File file) { }
 

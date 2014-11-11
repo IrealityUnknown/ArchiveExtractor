@@ -25,6 +25,7 @@ namespace ArchiveExtractor
         private string _episode;
         private string _quality;
         private string _release;
+        private bool _isReboot;
         private string _filenameArchive;
         //private bool test = true;
         private bool _isSrtFile;
@@ -119,6 +120,12 @@ namespace ArchiveExtractor
         {
             get { return _isSrtFile; }
             set { _isSrtFile = value; }
+        }
+
+        public bool IsReboot
+        {
+            get { return _isReboot; }
+            set { _isReboot = value; }
         }
 
         #endregion

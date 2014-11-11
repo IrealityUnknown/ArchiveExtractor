@@ -32,9 +32,17 @@ namespace ArchiveExtractor
         public MainWindow()
         {
             InitializeComponent();
-            
+
             if (Folder.GetInstance() != null)
+            {
+                // At Home
+                Folder.GetInstance().Path = "G:\\TV Shows\\SerieTest";
+
+                // PC Portable Perso
                 //Folder.GetInstance().Path = "D:\\TV Shows\\Doctor Who";
+
+                
+            }
             this.folderRibbonTextBox.Text = Folder.GetInstance().Path;
             this.folderRibbonTextBox.UpdateLayout();
 
@@ -54,7 +62,10 @@ namespace ArchiveExtractor
                 item = new File() { Selected = false, Name = file.ToString(), Size = 10.0, HasArchive = false, HasRelease = false };
                 items.Add(item);
                 //Format.formatFilename(item, )
+                // Old Formatting
                 item.checkYearInSeriesName();
+                // New formatting
+                item.FormatFile();
             }
 
             this.dataGrid.ItemsSource = items;
